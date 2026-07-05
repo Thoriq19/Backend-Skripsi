@@ -1,0 +1,1355 @@
+{
+	"info": {
+		"_postman_id": "microservices-kos-collection",
+		"name": "Microservices Kos - API Collection",
+		"description": "Koleksi lengkap API untuk testing microservices manajemen kos.\n\n**Cara Pakai:**\n1. Import file ini ke Postman\n2. Jalankan semua service (`start-services.bat`)\n3. Jalankan request `Login sebagai Owner` terlebih dahulu\n4. Copy token dari response, paste ke variabel `token` di Collection Variables\n5. Semua request lainnya akan otomatis menggunakan token tersebut",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"variable": [
+		{
+			"key": "gateway_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🏥 Health Check",
+			"item": [
+				{
+					"name": "Health Check - Semua Service",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{gateway_url}}/api/health",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "health"]
+						},
+						"description": "Cek status kesehatan semua microservices."
+					}
+				}
+			]
+		},
+		{
+			"name": "🔐 Auth Service",
+			"item": [
+				{
+					"name": "Register Owner",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_user\": \"Owner Kos Baru\",\n    \"email_user\": \"ownerbaru@example.com\",\n    \"password_user\": \"password123\",\n    \"password_user_confirmation\": \"password123\",\n    \"nohp_user\": \"081234567890\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/register",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "register"]
+						},
+						"description": "Registrasi akun owner baru. Hanya role owner yang bisa didaftarkan melalui endpoint ini."
+					}
+				},
+				{
+					"name": "Login sebagai Owner",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token saved automatically!');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_user\": \"owner@microservices.test\",\n    \"password_user\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/login",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Login sebagai Owner. Token JWT otomatis disimpan ke variabel `token`."
+					}
+				},
+				{
+					"name": "Login sebagai Pengelola Kos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token saved automatically!');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_user\": \"pengelola@microservices.test\",\n    \"password_user\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/login",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Login sebagai Pengelola Kos. Token JWT otomatis disimpan ke variabel `token`."
+					}
+				},
+				{
+					"name": "Login sebagai User (Penghuni)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token saved automatically!');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email_user\": \"ahmad@microservices.test\",\n    \"password_user\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/login",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "login"]
+						},
+						"description": "Login sebagai User/Penghuni. Token JWT otomatis disimpan ke variabel `token`."
+					}
+				},
+				{
+					"name": "Lihat Profil (Me)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/me",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "me"]
+						},
+						"description": "Lihat profil user yang sedang login."
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"type": "text/javascript",
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.success && jsonData.data && jsonData.data.token) {",
+									"    pm.collectionVariables.set('token', jsonData.data.token);",
+									"    console.log('Token refreshed and saved!');",
+									"}"
+								]
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/refresh",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "refresh"]
+						},
+						"description": "Refresh JWT token. Token baru otomatis disimpan."
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/logout",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "logout"]
+						},
+						"description": "Logout dan invalidasi token."
+					}
+				},
+				{
+					"name": "Validate Token (Internal)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/auth/validate-token",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "auth", "validate-token"]
+						},
+						"description": "Validasi token JWT. Endpoint internal yang digunakan oleh service lain."
+					}
+				}
+			]
+		},
+		{
+			"name": "👤 User Management",
+			"item": [
+				{
+					"name": "Buat Akun Pengelola Kos (Owner Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_user\": \"Pengelola Baru\",\n    \"email_user\": \"pengelolabaru@example.com\",\n    \"password_user\": \"password123\",\n    \"password_user_confirmation\": \"password123\",\n    \"nohp_user\": \"081234567891\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/users/create-pengelola-kos",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users", "create-pengelola-kos"]
+						},
+						"description": "Buat akun pengelola kos. Harus login sebagai Owner."
+					}
+				},
+				{
+					"name": "Buat Akun User/Penghuni (Pengelola Only)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_user\": \"Penghuni Baru\",\n    \"email_user\": \"penghunibaru@example.com\",\n    \"password_user\": \"password123\",\n    \"password_user_confirmation\": \"password123\",\n    \"nohp_user\": \"081234567892\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/users/create-user",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users", "create-user"]
+						},
+						"description": "Buat akun user/penghuni. Harus login sebagai Pengelola Kos."
+					}
+				},
+				{
+					"name": "List Semua Users",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/users?per_page=15",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users"],
+							"query": [
+								{ "key": "per_page", "value": "15" }
+							]
+						},
+						"description": "List semua user (paginated)."
+					}
+				},
+				{
+					"name": "Detail User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/users/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users", "1"]
+						},
+						"description": "Lihat detail user berdasarkan ID."
+					}
+				},
+				{
+					"name": "Update User",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_user\": \"Nama Updated\",\n    \"nohp_user\": \"081234567899\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/users/3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users", "3"]
+						},
+						"description": "Update data user."
+					}
+				},
+				{
+					"name": "Delete User",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/users/5",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "users", "5"]
+						},
+						"description": "Hapus user (soft delete)."
+					}
+				}
+			]
+		},
+		{
+			"name": "🏠 Property Service - Kos",
+			"item": [
+				{
+					"name": "List Semua Kos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kos",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos"]
+						},
+						"description": "List semua kos beserta kamarnya."
+					}
+				},
+				{
+					"name": "List Kos by Owner",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kos?id_user=1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos"],
+							"query": [
+								{ "key": "id_user", "value": "1" }
+							]
+						},
+						"description": "Filter kos berdasarkan pemilik."
+					}
+				},
+				{
+					"name": "Buat Kos Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_kos\": \"Kos Melati Cabang Jakarta\",\n    \"alamat_kos\": \"Jl. Melati No. 15, Jakarta Selatan\",\n    \"id_user\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/kos",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos"]
+						},
+						"description": "Buat data kos baru."
+					}
+				},
+				{
+					"name": "Detail Kos (+ Kamar & Aset)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kos/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos", "1"]
+						},
+						"description": "Lihat detail kos beserta daftar kamar dan aset."
+					}
+				},
+				{
+					"name": "Update Kos",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_kos\": \"Kos Mawar Putih (Updated)\",\n    \"alamat_kos\": \"Jl. Mawar No. 10A, Bandung Barat\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/kos/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos", "1"]
+						},
+						"description": "Update data kos."
+					}
+				},
+				{
+					"name": "Delete Kos",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kos/3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kos", "3"]
+						},
+						"description": "Hapus kos (soft delete)."
+					}
+				}
+			]
+		},
+		{
+			"name": "🚪 Property Service - Kamar",
+			"item": [
+				{
+					"name": "List Semua Kamar",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar"]
+						}
+					}
+				},
+				{
+					"name": "List Kamar by Kos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar?id_kos=1&status_kamar=tersedia",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar"],
+							"query": [
+								{ "key": "id_kos", "value": "1" },
+								{ "key": "status_kamar", "value": "tersedia" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Kamar Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nomor_kamar\": \"C301\",\n    \"kapasitas_kamar\": 2,\n    \"harga_kamar\": 1500000,\n    \"status_kamar\": \"tersedia\",\n    \"deskripsi_kamar\": \"Kamar premium dengan balkon dan AC\",\n    \"id_kos\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar"]
+						}
+					}
+				},
+				{
+					"name": "Detail Kamar",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Kamar",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"harga_kamar\": 900000,\n    \"status_kamar\": \"tersedia\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Kamar",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/kamar/5",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "kamar", "5"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📦 Property Service - Aset",
+			"item": [
+				{
+					"name": "List Semua Aset",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/aset",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset"]
+						}
+					}
+				},
+				{
+					"name": "List Aset by Kos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/aset?id_kos=1&kondisi=baik",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset"],
+							"query": [
+								{ "key": "id_kos", "value": "1" },
+								{ "key": "kondisi", "value": "baik" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Aset Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nama_aset\": \"TV LED 32 inch Samsung\",\n    \"tanggal_pembelian\": \"2024-06-01\",\n    \"harga\": 3200000,\n    \"kondisi\": \"baik\",\n    \"id_kos\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/aset",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset"]
+						}
+					}
+				},
+				{
+					"name": "Detail Aset",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/aset/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Aset",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"kondisi\": \"rusak_ringan\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/aset/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Aset",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/aset/5",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "aset", "5"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔧 Property Service - Maintenance",
+			"item": [
+				{
+					"name": "List Semua Maintenance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance"]
+						}
+					}
+				},
+				{
+					"name": "List Maintenance by Aset",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance?id_aset=1&status=dijadwalkan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance"],
+							"query": [
+								{ "key": "id_aset", "value": "1" },
+								{ "key": "status", "value": "dijadwalkan" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Maintenance Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deskripsi\": \"Servis AC rutin tahunan\",\n    \"biaya\": 350000,\n    \"tanggal_perbaikan\": \"2024-08-15\",\n    \"status\": \"dijadwalkan\",\n    \"id_aset\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance"]
+						}
+					}
+				},
+				{
+					"name": "Detail Maintenance",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Maintenance",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status\": \"selesai\",\n    \"biaya\": 400000\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Maintenance",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/maintenance/3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "maintenance", "3"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📋 Payment - Sewa",
+			"item": [
+				{
+					"name": "List Semua Sewa",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa"]
+						}
+					}
+				},
+				{
+					"name": "List Sewa by User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa?id_user=3&status_sewa=aktif",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa"],
+							"query": [
+								{ "key": "id_user", "value": "3" },
+								{ "key": "status_sewa", "value": "aktif" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Kontrak Sewa Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"tanggal_masuk\": \"2024-08-01\",\n    \"tanggal_keluar\": \"2025-08-01\",\n    \"status_sewa\": \"aktif\",\n    \"id_user\": 3,\n    \"id_kamar\": 2\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa"]
+						}
+					}
+				},
+				{
+					"name": "Detail Sewa",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Sewa",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status_sewa\": \"berakhir\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Sewa",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/sewa/3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "sewa", "3"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "💰 Payment - Tagihan",
+			"item": [
+				{
+					"name": "List Semua Tagihan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/tagihan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "tagihan"]
+						}
+					}
+				},
+				{
+					"name": "List Tagihan Belum Bayar",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/tagihan?status_tagihan=belum_bayar&id_sewa=1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "tagihan"],
+							"query": [
+								{ "key": "status_tagihan", "value": "belum_bayar" },
+								{ "key": "id_sewa", "value": "1" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Tagihan Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"bulan_tagihan\": \"2024-08\",\n    \"tanggal_jatuhtempo\": \"2024-08-10\",\n    \"jumlah_tagihan\": 800000,\n    \"status_tagihan\": \"belum_bayar\",\n    \"id_sewa\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/tagihan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "tagihan"]
+						}
+					}
+				},
+				{
+					"name": "Detail Tagihan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/tagihan/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "tagihan", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Tagihan",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status_tagihan\": \"lunas\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/tagihan/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "tagihan", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "💳 Payment - Pembayaran",
+			"item": [
+				{
+					"name": "List Semua Pembayaran",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran"]
+						}
+					}
+				},
+				{
+					"name": "List Pembayaran by Status",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran?status_pembayaran=berhasil",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran"],
+							"query": [
+								{ "key": "status_pembayaran", "value": "berhasil" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Pembayaran Baru",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"metode_pembayaran\": \"transfer_bank\",\n    \"jumlah_bayar\": 800000,\n    \"status_pembayaran\": \"pending\",\n    \"payment_gateway\": \"manual\",\n    \"id_tagihan\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran"]
+						}
+					}
+				},
+				{
+					"name": "Detail Pembayaran",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Status Pembayaran",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status_pembayaran\": \"berhasil\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran/1/status",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran", "1", "status"]
+						},
+						"description": "Update status pembayaran. Jika berhasil, otomatis update tagihan ke lunas."
+					}
+				},
+				{
+					"name": "⚠️ Webhook Gateway (PUBLIC)",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"external_id\": \"TXN-XENDIT-12345\",\n    \"status\": \"PAID\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/pembayaran/webhook",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "pembayaran", "webhook"]
+						},
+						"description": "Endpoint webhook untuk payment gateway (Xendit/Midtrans). TIDAK memerlukan JWT token."
+					}
+				}
+			]
+		},
+		{
+			"name": "🔴 Complaint Service - Laporan",
+			"item": [
+				{
+					"name": "List Semua Laporan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan"]
+						}
+					}
+				},
+				{
+					"name": "List Laporan by User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan?id_user=3&status_laporan=dilaporkan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan"],
+							"query": [
+								{ "key": "id_user", "value": "3" },
+								{ "key": "status_laporan", "value": "dilaporkan" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Laporan Kerusakan",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deskripsi\": \"AC di kamar A101 tidak dingin, hanya keluar angin biasa\",\n    \"foto\": \"uploads/laporan/ac_rusak_001.jpg\",\n    \"id_user\": 3,\n    \"id_aset\": 1\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan"]
+						}
+					}
+				},
+				{
+					"name": "Detail Laporan",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Laporan",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deskripsi\": \"AC di kamar A101 tidak dingin sama sekali, sudah dicoba restart\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Status Laporan",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"status_laporan\": \"diproses\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan/1/status",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan", "1", "status"]
+						},
+						"description": "Update status laporan kerusakan. Nilai: dilaporkan, diproses, selesai."
+					}
+				},
+				{
+					"name": "Delete Laporan",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/laporan/2",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "laporan", "2"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🔔 Notification Service",
+			"item": [
+				{
+					"name": "List Semua Notifikasi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi?id_user=3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi"],
+							"query": [
+								{ "key": "id_user", "value": "3" }
+							]
+						}
+					}
+				},
+				{
+					"name": "List Notifikasi Belum Dibaca",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi?id_user=3&dibaca=false",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi"],
+							"query": [
+								{ "key": "id_user", "value": "3" },
+								{ "key": "dibaca", "value": "false" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Buat Notifikasi",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_user\": 3,\n    \"judul\": \"Pengingat Pembayaran\",\n    \"pesan\": \"Tagihan bulan Juli jatuh tempo 5 hari lagi. Jumlah: Rp 800.000\",\n    \"tipe\": \"peringatan\",\n    \"id_terkait\": 1,\n    \"tipe_terkait\": \"tagihan\"\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi"]
+						}
+					}
+				},
+				{
+					"name": "Hitung Belum Dibaca",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi/belum-dibaca?id_user=3",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi", "belum-dibaca"],
+							"query": [
+								{ "key": "id_user", "value": "3" }
+							]
+						},
+						"description": "Hitung jumlah notifikasi yang belum dibaca oleh user."
+					}
+				},
+				{
+					"name": "Detail Notifikasi",
+					"request": {
+						"method": "GET",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi", "1"]
+						}
+					}
+				},
+				{
+					"name": "Tandai Sudah Dibaca",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi/1/baca",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi", "1", "baca"]
+						},
+						"description": "Tandai satu notifikasi sebagai sudah dibaca."
+					}
+				},
+				{
+					"name": "Tandai Semua Dibaca",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" },
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"id_user\": 3\n}"
+						},
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi/baca-semua",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi", "baca-semua"]
+						},
+						"description": "Tandai semua notifikasi milik user sebagai sudah dibaca."
+					}
+				},
+				{
+					"name": "Delete Notifikasi",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{ "key": "Accept", "value": "application/json" }
+						],
+						"url": {
+							"raw": "{{gateway_url}}/api/notifikasi/1",
+							"host": ["{{gateway_url}}"],
+							"path": ["api", "notifikasi", "1"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

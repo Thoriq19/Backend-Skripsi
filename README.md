@@ -5,6 +5,7 @@
 [![MySQL](https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat-square&logo=mysql&logoColor=white)](https://mysql.com)
 
 Arsitektur microservices lengkap berbasis Laravel 12.x untuk sistem manajemen kos terdistribusi. Terdiri dari **5 microservices**, **1 API Gateway**, dan **manajemen database terpusat** dengan total 10 tabel relasional.
+hello from fendew
 
 ---
 

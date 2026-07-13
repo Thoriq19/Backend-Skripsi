@@ -2,13 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use PHPOpenSourceSaver\JWTAuth\Contracts\JWTSubject;
 
-class User extends Authenticatable implements JWTSubject
+class User extends Authenticatable implements JWTSubject, MustVerifyEmail
 {
     use HasFactory, Notifiable, SoftDeletes;
 
@@ -23,6 +24,7 @@ class User extends Authenticatable implements JWTSubject
         'password_user',
         'role',
         'nohp_user',
+        'dokumen_pendukung',
     ];
 
     /**
@@ -101,5 +103,16 @@ class User extends Authenticatable implements JWTSubject
     public function isUser(): bool
     {
         return $this->role === 'user';
+    }
+
+    /**
+     * Route notifications for the mail channel.
+     *
+     * @param  \Illuminate\Notifications\Notification  $notification
+     * @return array|string
+     */
+    public function routeNotificationForMail($notification)
+    {
+        return $this->email_user;
     }
 }

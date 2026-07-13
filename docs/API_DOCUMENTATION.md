@@ -415,7 +415,8 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
     "email_user": "ahmad@example.com",
     "password_user": "password123",
     "password_user_confirmation": "password123",
-    "nohp_user": "081234567892"
+    "nohp_user": "081234567892",
+    "dokumen_pendukung": "uploads/dokumen/ktp_ahmad.jpg"
 }
 ```
 
@@ -429,7 +430,8 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
         "nama_user": "Ahmad Fauzi",
         "email_user": "ahmad@example.com",
         "role": "user",
-        "nohp_user": "081234567892"
+        "nohp_user": "081234567892",
+        "dokumen_pendukung": "uploads/dokumen/ktp_ahmad.jpg"
     },
     "errors": null
 }
@@ -439,7 +441,13 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
 
 List semua users (paginated).
 
-**Query Parameters:** `?per_page=15&page=1`
+**Query Parameters:** 
+
+| Parameter | Tipe | Deskripsi |
+|-----------|------|-----------|
+| role | string | Filter berdasarkan role (`owner`, `pengelola_kos`, `user`/penghuni) |
+| per_page | integer | Item per halaman (default: 15) |
+| page | integer | Halaman saat ini |
 
 #### GET /api/users/{id} 🔒
 
@@ -481,6 +489,7 @@ List semua kos dengan optional filter.
 | Parameter | Tipe | Deskripsi |
 |-----------|------|-----------|
 | id_user | integer | Filter berdasarkan pemilik (owner) |
+| id_pengelola | integer | Filter berdasarkan pengelola kos |
 | per_page | integer | Item per halaman (default: 15) |
 
 **Response (200):**
@@ -522,7 +531,8 @@ Buat kos baru.
 {
     "nama_kos": "Kos Melati Cabang Jakarta",
     "alamat_kos": "Jl. Melati No. 15, Jakarta Selatan",
-    "id_user": 1
+    "id_user": 1,
+    "id_pengelola": null
 }
 ```
 
@@ -533,6 +543,15 @@ Detail kos beserta daftar kamar dan aset.
 #### PUT /api/kos/{id} 🔒
 
 Update data kos.
+
+**Request:**
+```json
+{
+    "nama_kos": "Kos Melati Cabang Jakarta (Updated)",
+    "alamat_kos": "Jl. Melati No. 15B, Jakarta Selatan",
+    "id_pengelola": 2
+}
+```
 
 #### DELETE /api/kos/{id} 🔒
 
@@ -552,14 +571,17 @@ List semua kamar dengan optional filter.
 | status_kamar | string | Filter: `tersedia`, `terisi`, `maintenance`, `tidak_tersedia`, `segera` |
 | per_page | integer | Item per halaman (default: 15) |
 
-#### POST /api/kamar 🔒
+#### POST /api/kamar 🔒👑 (Owner Only)
 
-Buat kamar baru.
+Buat kamar baru (menambah alokasi fisik kamar). Hanya Owner yang berhak menambah alokasi kamar baru pada kos miliknya.
+
+**Headers:** `Authorization: Bearer {token}` (Token Owner)
 
 **Request:**
 ```json
 {
     "nomor_kamar": "A103",
+    "tipe_kamar": "premium",
     "kapasitas_kamar": 2,
     "harga_kamar": 1200000,
     "status_kamar": "tersedia",
@@ -572,13 +594,27 @@ Buat kamar baru.
 
 Detail kamar.
 
-#### PUT /api/kamar/{id} 🔒
+#### PUT /api/kamar/{id} 🔒🛡️ (Owner & Pengelola)
 
-Update kamar.
+Update detail kamar (nomor, tipe, harga, status, atau deskripsi). Dapat diakses oleh Owner maupun Pengelola Kos yang ditugasi mengelola properti tersebut.
 
-#### DELETE /api/kamar/{id} 🔒
+**Headers:** `Authorization: Bearer {token}` (Token Owner / Pengelola Kos)
 
-Hapus kamar (soft delete).
+**Request:**
+```json
+{
+    "nomor_kamar": "A103-AC",
+    "tipe_kamar": "deluxe",
+    "harga_kamar": 1300000,
+    "status_kamar": "terisi"
+}
+```
+
+#### DELETE /api/kamar/{id} 🔒👑 (Owner Only)
+
+Hapus kamar fisik (soft delete). Hanya Owner yang berhak mengurangi alokasi kamar fisik.
+
+**Headers:** `Authorization: Bearer {token}` (Token Owner)
 
 ### Aset Endpoints
 
@@ -602,6 +638,7 @@ Buat aset baru.
 ```json
 {
     "nama_aset": "AC Daikin 1PK",
+    "kategori": "elektronik",
     "tanggal_pembelian": "2024-01-15",
     "harga": 4500000,
     "kondisi": "baik",
@@ -687,14 +724,15 @@ List semua data kontrak sewa.
 
 #### POST /api/sewa 🔒
 
-Buat kontrak sewa baru.
+Buat kontrak sewa baru. Sistem sewa bersifat bergulir (recurring/rolling contract). `tanggal_keluar` bersifat opsional (nullable) dan baru diisi saat checkout. `harga_sewa` digunakan untuk mengunci harga sewa. Setelah sewa dibuat, tagihan pertama akan otomatis di-generate.
 
 **Request:**
 ```json
 {
     "tanggal_masuk": "2024-07-01",
-    "tanggal_keluar": "2025-07-01",
+    "tanggal_keluar": null,
     "status_sewa": "aktif",
+    "harga_sewa": 1200000,
     "id_user": 3,
     "id_kamar": 1
 }

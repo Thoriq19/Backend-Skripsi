@@ -48,6 +48,9 @@ class LaporanController extends Controller
      * Create a new laporan kerusakan.
      *
      * POST /api/laporan
+     *
+     * Setelah laporan dibuat, sistem otomatis mengirim notifikasi
+     * ke pengelola kos melalui Notification Service (Prosedur 7c).
      */
     public function store(Request $request): JsonResponse
     {
@@ -72,6 +75,25 @@ class LaporanController extends Controller
             $request->all(),
             ['tanggal_lapor' => now()]
         ));
+
+        // Kirim notifikasi otomatis ke pengelola kos (Prosedur 7c)
+        try {
+            $notifClient = new \Shared\MicroserviceClient(
+                env('NOTIFICATION_SERVICE_URL', 'http://localhost:8007')
+            );
+
+            // Notifikasi dikirim ke pengelola kos (id_user dari request header jika tersedia)
+            $notifClient->post('/api/notifikasi', [
+                'id_user'      => $request->id_user,
+                'judul'        => 'Laporan Kerusakan Baru',
+                'pesan'        => "Laporan kerusakan baru telah dibuat: {$request->deskripsi}",
+                'tipe'         => 'laporan',
+                'id_terkait'   => $laporan->id,
+                'tipe_terkait' => 'laporan_kerusakan',
+            ]);
+        } catch (\Exception $e) {
+            // Notifikasi gagal tidak menghentikan proses pembuatan laporan
+        }
 
         return response()->json([
             'success' => true,

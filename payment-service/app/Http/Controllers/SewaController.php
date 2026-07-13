@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Sewa;
+use App\Models\Tagihan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -48,13 +49,28 @@ class SewaController extends Controller
      * Create a new sewa.
      *
      * POST /api/sewa
+     *
+     * Setelah sewa dibuat, sistem otomatis men-generate tagihan pertama
+     * berdasarkan tanggal masuk penghuni (Prosedur 4d).
      */
     public function store(Request $request): JsonResponse
     {
+        // Authorize: Only owner or pengelola_kos can create sewa
+        $userRole = $request->input('auth_user_role');
+        if (!in_array($userRole, ['owner', 'pengelola_kos'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner and pengelola kos can create sewa contracts.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'tanggal_masuk'  => 'required|date',
-            'tanggal_keluar' => 'required|date|after:tanggal_masuk',
+            'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
             'status_sewa'    => 'sometimes|in:aktif,berakhir,dibatalkan',
+            'harga_sewa'     => 'required|numeric|min:0',
             'id_user'        => 'required|integer|exists:users,id',
             'id_kamar'       => 'required|integer|exists:kamar,id',
         ]);
@@ -70,10 +86,20 @@ class SewaController extends Controller
 
         $sewa = Sewa::create($request->all());
 
+        // Auto-generate tagihan pertama berdasarkan tanggal masuk (Prosedur 4d)
+        $tanggalMasuk = \Carbon\Carbon::parse($request->tanggal_masuk);
+        $tagihan = Tagihan::create([
+            'bulan_tagihan'      => $tanggalMasuk->format('Y-m'),
+            'tanggal_jatuhtempo' => $tanggalMasuk->toDateString(),
+            'jumlah_tagihan'     => $request->harga_sewa,
+            'status_tagihan'     => 'belum_bayar',
+            'id_sewa'            => $sewa->id,
+        ]);
+
         return response()->json([
             'success' => true,
-            'message' => 'Sewa created successfully',
-            'data'    => $sewa,
+            'message' => 'Sewa created successfully. Tagihan pertama otomatis dibuat.',
+            'data'    => $sewa->load('tagihan'),
             'errors'  => null,
         ], 201);
     }
@@ -111,6 +137,17 @@ class SewaController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        // Authorize: Only owner or pengelola_kos can update sewa
+        $userRole = $request->input('auth_user_role');
+        if (!in_array($userRole, ['owner', 'pengelola_kos'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner and pengelola kos can update sewa contracts.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $sewa = Sewa::find($id);
 
         if (!$sewa) {
@@ -124,8 +161,9 @@ class SewaController extends Controller
 
         $validator = Validator::make($request->all(), [
             'tanggal_masuk'  => 'sometimes|date',
-            'tanggal_keluar' => 'sometimes|date|after:tanggal_masuk',
+            'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
             'status_sewa'    => 'sometimes|in:aktif,berakhir,dibatalkan',
+            'harga_sewa'     => 'sometimes|numeric|min:0',
             'id_user'        => 'sometimes|integer|exists:users,id',
             'id_kamar'       => 'sometimes|integer|exists:kamar,id',
         ]);
@@ -154,8 +192,19 @@ class SewaController extends Controller
      *
      * DELETE /api/sewa/{id}
      */
-    public function destroy(int $id): JsonResponse
+    public function destroy(Request $request, int $id): JsonResponse
     {
+        // Authorize: Only owner or pengelola_kos can delete sewa
+        $userRole = $request->input('auth_user_role');
+        if (!in_array($userRole, ['owner', 'pengelola_kos'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner and pengelola kos can delete sewa contracts.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $sewa = Sewa::find($id);
 
         if (!$sewa) {

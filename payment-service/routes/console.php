@@ -22,3 +22,15 @@ Artisan::command('inspire', function () {
 |
 */
 Schedule::command('tagihan:check-jatuhtempo')->dailyAt('08:00');
+
+/*
+|--------------------------------------------------------------------------
+| Scheduler: Generate Tagihan Bulanan
+|--------------------------------------------------------------------------
+|
+| Menjalankan pembuatan tagihan otomatis setiap tanggal 1 setiap bulan.
+| Akan membuat tagihan baru untuk setiap sewa aktif yang belum memiliki
+| tagihan pada bulan tersebut (Prosedur 6b).
+|
+*/
+Schedule::command('tagihan:generate-bulanan')->monthlyOn(1, '00:01');

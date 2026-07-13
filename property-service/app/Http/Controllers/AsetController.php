@@ -48,6 +48,7 @@ class AsetController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nama_aset'          => 'required|string|max:255',
+            'kategori'           => 'nullable|string|max:255',
             'tanggal_pembelian'  => 'required|date',
             'harga'              => 'required|numeric|min:0',
             'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat',
@@ -119,6 +120,7 @@ class AsetController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nama_aset'          => 'sometimes|string|max:255',
+            'kategori'           => 'nullable|string|max:255',
             'tanggal_pembelian'  => 'sometimes|date',
             'harga'              => 'sometimes|numeric|min:0',
             'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat',

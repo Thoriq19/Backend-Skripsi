@@ -15,6 +15,8 @@ use App\Http\Controllers\UserController;
 Route::prefix('auth')->group(function () {
     Route::post('/register', [AuthController::class, 'register']);
     Route::post('/login', [AuthController::class, 'login']);
+    Route::get('/verify/{id}/{hash}', [AuthController::class, 'verify'])
+        ->name('verification.verify');
 });
 
 /*

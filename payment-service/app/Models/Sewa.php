@@ -16,6 +16,7 @@ class Sewa extends Model
         'tanggal_masuk',
         'tanggal_keluar',
         'status_sewa',
+        'harga_sewa',
         'id_user',
         'id_kamar',
     ];
@@ -25,6 +26,7 @@ class Sewa extends Model
         return [
             'tanggal_masuk'  => 'date',
             'tanggal_keluar' => 'date',
+            'harga_sewa'     => 'decimal:2',
         ];
     }
 

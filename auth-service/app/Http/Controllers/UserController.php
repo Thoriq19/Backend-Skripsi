@@ -16,8 +16,15 @@ class UserController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $query = User::query();
+
+        // Filter berdasarkan role (misal: ?role=user untuk rekap penghuni)
+        if ($request->has('role')) {
+            $query->where('role', $request->role);
+        }
+
         $perPage = $request->get('per_page', 15);
-        $users = User::paginate($perPage);
+        $users = $query->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -72,10 +79,11 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nama_user'  => 'sometimes|string|max:255',
-            'email_user' => 'sometimes|string|email|max:255|unique:users,email_user,' . $id,
-            'nohp_user'  => 'nullable|string|max:20',
-            'role'       => 'sometimes|in:pengelola_kos,owner,user',
+            'nama_user'     => 'sometimes|string|max:255',
+            'email_user'    => 'sometimes|string|email|max:255|unique:users,email_user,' . $id,
+            'nohp_user'     => 'nullable|string|max:20',
+            'role'          => 'sometimes|in:pengelola_kos,owner,user',
+            'password_user' => 'nullable|string|min:6|confirmed',
         ]);
 
         if ($validator->fails()) {
@@ -87,7 +95,12 @@ class UserController extends Controller
             ], 422);
         }
 
-        $user->update($request->only(['nama_user', 'email_user', 'nohp_user', 'role']));
+        $updateData = $request->only(['nama_user', 'email_user', 'nohp_user', 'role']);
+        if ($request->filled('password_user')) {
+            $updateData['password_user'] = $request->password_user;
+        }
+
+        $user->update($updateData);
 
         return response()->json([
             'success' => true,
@@ -157,6 +170,7 @@ class UserController extends Controller
             'password_user' => $request->password_user,
             'role'          => 'pengelola_kos',
             'nohp_user'     => $request->nohp_user,
+            'email_verified_at' => now(),
         ]);
 
         return response()->json([
@@ -178,10 +192,11 @@ class UserController extends Controller
     public function createUser(Request $request): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'nama_user'     => 'required|string|max:255',
-            'email_user'    => 'required|string|email|max:255|unique:users,email_user',
-            'password_user' => 'required|string|min:6|confirmed',
-            'nohp_user'     => 'nullable|string|max:20',
+            'nama_user'          => 'required|string|max:255',
+            'email_user'         => 'required|string|email|max:255|unique:users,email_user',
+            'password_user'      => 'required|string|min:6|confirmed',
+            'nohp_user'          => 'nullable|string|max:20',
+            'dokumen_pendukung'  => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -194,11 +209,13 @@ class UserController extends Controller
         }
 
         $user = User::create([
-            'nama_user'     => $request->nama_user,
-            'email_user'    => $request->email_user,
-            'password_user' => $request->password_user,
-            'role'          => 'user',
-            'nohp_user'     => $request->nohp_user,
+            'nama_user'          => $request->nama_user,
+            'email_user'         => $request->email_user,
+            'password_user'      => $request->password_user,
+            'role'               => 'user',
+            'nohp_user'          => $request->nohp_user,
+            'dokumen_pendukung'  => $request->dokumen_pendukung,
+            'email_verified_at'  => now(),
         ]);
 
         return response()->json([

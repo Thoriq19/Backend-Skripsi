@@ -45,20 +45,27 @@ class AuthController extends Controller
             'nohp_user'     => $request->nohp_user,
         ]);
 
-        /** @var \PHPOpenSourceSaver\JWTAuth\JWTGuard $guard */
-        $guard = auth('api');
-        $token = $guard->login($user);
+        // Di environment local (development/demo), langsung verifikasi email otomatis
+        // tanpa perlu klik link di inbox. Di production, user tetap harus verifikasi.
+        if (app()->environment('local')) {
+            $user->markEmailAsVerified();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Pendaftaran berhasil. Akun Anda langsung aktif (mode development).',
+                'data'    => null,
+                'errors'  => null,
+            ], 201);
+        }
+
+        // Production: kirim email verifikasi, user harus klik link sebelum login
+        event(new \Illuminate\Auth\Events\Registered($user));
 
         return response()->json([
             'success' => true,
-            'message' => 'Owner registered successfully',
-            'data'    => [
-                'user'  => $user,
-                'token' => $token,
-                'token_type'   => 'bearer',
-                'expires_in'   => config('jwt.ttl') * 60,
-            ],
-            'errors' => null,
+            'message' => 'Pendaftaran berhasil. Silakan periksa kotak masuk email Anda untuk memverifikasi akun sebelum login.',
+            'data'    => null,
+            'errors'  => null,
         ], 201);
     }
 
@@ -98,6 +105,17 @@ class AuthController extends Controller
         }
 
         $user = auth('api')->user();
+
+        // Check if email is verified (only for Owner role, Pengelola/User are pre-verified)
+        if ($user->role === 'owner' && is_null($user->email_verified_at)) {
+            auth('api')->logout(); // invalidate token because not verified
+            return response()->json([
+                'success' => false,
+                'message' => 'Alamat email Anda belum diverifikasi. Silakan periksa kotak masuk email Anda.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
 
         return response()->json([
             'success' => true,
@@ -203,5 +221,47 @@ class AuthController extends Controller
                 'errors'  => $e->getMessage(),
             ], 401);
         }
+    }
+
+    /**
+     * Verify email address using Laravel temporary signed URL.
+     *
+     * GET /api/auth/verify/{id}/{hash}
+     */
+    public function verify(Request $request, $id, $hash)
+    {
+        // 1. Manually check signature validation since JWT is stateless
+        if (! $request->hasValidSignature()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tautan verifikasi tidak valid atau telah kedaluwarsa.',
+                'data'    => null,
+                'errors'  => null,
+            ], 401);
+        }
+
+        $user = User::findOrFail($id);
+
+        // 2. Validate hash mapping
+        if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Token verifikasi email tidak cocok.',
+                'data'    => null,
+                'errors'  => null,
+            ], 401);
+        }
+
+        // 3. Mark as verified if not already
+        if ($user->hasVerifiedEmail()) {
+            return redirect()->away('http://localhost:5173/login?verified=already');
+        }
+
+        if ($user->markEmailAsVerified()) {
+            event(new \Illuminate\Auth\Events\Verified($user));
+        }
+
+        // 4. Redirect user to frontend login page with verify success indicator
+        return redirect()->away('http://localhost:5173/login?verified=success');
     }
 }

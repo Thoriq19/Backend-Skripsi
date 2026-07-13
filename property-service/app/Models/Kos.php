@@ -15,7 +15,9 @@ class Kos extends Model
     protected $fillable = [
         'nama_kos',
         'alamat_kos',
+        'jumlah_kamar',
         'id_user',
+        'id_pengelola',
     ];
 
     /**
@@ -24,6 +26,14 @@ class Kos extends Model
     public function owner()
     {
         return $this->belongsTo(\App\Models\User::class, 'id_user');
+    }
+
+    /**
+     * Get the pengelola (manager) assigned to this kos.
+     */
+    public function pengelola()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'id_pengelola');
     }
 
     /**

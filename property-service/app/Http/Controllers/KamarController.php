@@ -51,8 +51,20 @@ class KamarController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
+        // Authorize: Only owner can add new physical rooms to a property
+        $userRole = $request->input('auth_user_role');
+        if ($userRole !== 'owner') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner can add rooms to a property.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $validator = Validator::make($request->all(), [
             'nomor_kamar'     => 'required|string|max:50',
+            'tipe_kamar'      => 'nullable|string|max:100',
             'kapasitas_kamar' => 'required|integer|min:1',
             'harga_kamar'     => 'required|numeric|min:0',
             'status_kamar'    => 'sometimes|in:tersedia,terisi,maintenance,tidak_tersedia,segera',
@@ -112,6 +124,17 @@ class KamarController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        // Authorize: Both owner and pengelola_kos can update room details
+        $userRole = $request->input('auth_user_role');
+        if (!in_array($userRole, ['owner', 'pengelola_kos'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner or pengelola kos can update room details.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $kamar = Kamar::find($id);
 
         if (!$kamar) {
@@ -125,6 +148,7 @@ class KamarController extends Controller
 
         $validator = Validator::make($request->all(), [
             'nomor_kamar'     => 'sometimes|string|max:50',
+            'tipe_kamar'      => 'nullable|string|max:100',
             'kapasitas_kamar' => 'sometimes|integer|min:1',
             'harga_kamar'     => 'sometimes|numeric|min:0',
             'status_kamar'    => 'sometimes|in:tersedia,terisi,maintenance,tidak_tersedia,segera',
@@ -158,6 +182,17 @@ class KamarController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
+        // Authorize: Only owner can delete physical rooms (assets)
+        $userRole = request()->input('auth_user_role');
+        if ($userRole !== 'owner') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Forbidden. Only owner can delete physical rooms.',
+                'data'    => null,
+                'errors'  => null,
+            ], 403);
+        }
+
         $kamar = Kamar::find($id);
 
         if (!$kamar) {

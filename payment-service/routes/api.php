@@ -42,6 +42,7 @@ Route::middleware([\App\Http\Middleware\JwtMiddleware::class])->group(function (
     Route::prefix('pembayaran')->group(function () {
         Route::get('/', [PembayaranController::class, 'index']);
         Route::post('/', [PembayaranController::class, 'store']);
+        Route::post('/snap', [PembayaranController::class, 'createSnapToken']);
         Route::get('/{id}', [PembayaranController::class, 'show']);
         Route::put('/{id}/status', [PembayaranController::class, 'updateStatus']);
     });

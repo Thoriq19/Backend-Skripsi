@@ -41,6 +41,8 @@ class LaporanControllerTest extends TestCase
             'nama_aset' => 'AC Kamar 101',
             'kategori' => 'elektronik',
             'kondisi' => 'baik',
+            'tanggal_pembelian' => now()->toDateString(),
+            'harga' => 2000000,
             'id_kos' => $kosId,
             'created_at' => now(),
             'updated_at' => now(),
@@ -48,7 +50,7 @@ class LaporanControllerTest extends TestCase
     }
 
     /**
-     * Test a user can successfully submit a damage report.
+     * Menguji penghuni dapat mengirimkan laporan kerusakan fasilitas kos.
      */
     public function test_user_can_submit_damage_report()
     {
@@ -82,7 +84,7 @@ class LaporanControllerTest extends TestCase
     }
 
     /**
-     * Test report submission fails if required fields are missing.
+     * Menguji kegagalan kirim aduan jika kolom penting tidak diisi.
      */
     public function test_report_submission_fails_on_validation_failure()
     {

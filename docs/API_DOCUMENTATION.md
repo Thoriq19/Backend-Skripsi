@@ -409,6 +409,9 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
 **Headers:** `Authorization: Bearer {token}` (Token Pengelola Kos)
 
 **Request:**
+> [!NOTE]
+> Parameter `dokumen_pendukung` dapat dikirim dalam bentuk string path file relatif **atau** data URL Base64 gambar KTP asli (misal: `data:image/png;base64,...`). Jika dikirim sebagai Base64, backend akan otomatis men-decode-nya dan menyimpan file fisik aslinya ke dalam disk server.
+
 ```json
 {
     "nama_user": "Ahmad Fauzi",
@@ -416,7 +419,7 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
     "password_user": "password123",
     "password_user_confirmation": "password123",
     "nohp_user": "081234567892",
-    "dokumen_pendukung": "uploads/dokumen/ktp_ahmad.jpg"
+    "dokumen_pendukung": "data:image/png;base64,iVBORw0KGgoAAA..."
 }
 ```
 
@@ -431,7 +434,7 @@ Buat akun user/penghuni. Hanya pengelola kos yang bisa mengakses endpoint ini.
         "email_user": "ahmad@example.com",
         "role": "user",
         "nohp_user": "081234567892",
-        "dokumen_pendukung": "uploads/dokumen/ktp_ahmad.jpg"
+        "dokumen_pendukung": "/uploads/ktp/ktp_66a1e3b2e5c89.png"
     },
     "errors": null
 }
@@ -458,11 +461,15 @@ Dapatkan user berdasarkan ID.
 Update user.
 
 **Request:**
+> [!NOTE]
+> Parameter `dokumen_pendukung` juga dapat menerima data URL Base64 gambar KTP asli untuk mengganti/memperbarui dokumen KTP yang terunggah.
+
 ```json
 {
     "nama_user": "Ahmad Updated",
     "nohp_user": "081234567899",
-    "role": "user"
+    "role": "user",
+    "dokumen_pendukung": "data:image/png;base64,iVBORw0KGgoAAA..."
 }
 ```
 

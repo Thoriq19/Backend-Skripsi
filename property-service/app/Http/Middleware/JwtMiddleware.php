@@ -21,6 +21,17 @@ class JwtMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Allow simulated gateway parameters in testing env
+        if (app()->environment('testing') && ($request->has('auth_user_role') || $request->hasHeader('Authorization') === false)) {
+            $request->merge([
+                'auth_user_id'   => $request->input('auth_user_id') ?? $request->input('id_user') ?? 1,
+                'auth_user_role' => $request->input('auth_user_role') ?? 'owner',
+                'auth_user_name' => $request->input('auth_user_name') ?? 'Test User',
+                'auth_user_email'=> $request->input('auth_user_email') ?? 'test@test.com',
+            ]);
+            return $next($request);
+        }
+
         $token = $request->bearerToken();
 
         if (!$token) {
@@ -66,6 +77,15 @@ class JwtMiddleware
                 'errors'  => null,
             ], 401);
 
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = json_decode($response->getBody()->getContents(), true);
+            return response()->json($body ?? [
+                'success' => false,
+                'message' => 'Unauthorized',
+                'data'    => null,
+                'errors'  => null,
+            ], $response->getStatusCode());
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

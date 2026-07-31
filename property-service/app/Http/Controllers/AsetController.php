@@ -18,6 +18,19 @@ class AsetController extends Controller
     {
         $query = Aset::query();
 
+        $userRole   = $request->input('auth_user_role');
+        $authUserId = $request->input('auth_user_id');
+
+        if ($userRole === 'owner' && $authUserId) {
+            $query->whereHas('kos', function ($q) use ($authUserId) {
+                $q->where('id_user', $authUserId);
+            });
+        } elseif ($userRole === 'pengelola_kos' && $authUserId) {
+            $query->whereHas('kos', function ($q) use ($authUserId) {
+                $q->where('id_pengelola', $authUserId);
+            });
+        }
+
         // Filter by kondisi
         if ($request->has('kondisi')) {
             $query->where('kondisi', $request->kondisi);
@@ -28,8 +41,17 @@ class AsetController extends Controller
             $query->where('id_kos', $request->id_kos);
         }
 
+        // Filter by kamar
+        if ($request->has('id_kamar')) {
+            if ($request->id_kamar === 'null' || $request->id_kamar === null || $request->id_kamar === '0') {
+                $query->whereNull('id_kamar');
+            } else {
+                $query->where('id_kamar', $request->id_kamar);
+            }
+        }
+
         $perPage = $request->get('per_page', 15);
-        $aset = $query->with('kos')->paginate($perPage);
+        $aset = $query->with(['kos', 'kamar'])->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -51,8 +73,9 @@ class AsetController extends Controller
             'kategori'           => 'nullable|string|max:255',
             'tanggal_pembelian'  => 'required|date',
             'harga'              => 'required|numeric|min:0',
-            'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat',
+            'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat,perlu_di_ganti',
             'id_kos'             => 'required|integer|exists:kos,id',
+            'id_kamar'           => 'nullable|integer|exists:kamar,id',
         ]);
 
         if ($validator->fails()) {
@@ -69,7 +92,7 @@ class AsetController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Aset created successfully',
-            'data'    => $aset,
+            'data'    => $aset->load(['kos', 'kamar']),
             'errors'  => null,
         ], 201);
     }
@@ -81,7 +104,7 @@ class AsetController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $aset = Aset::with(['kos', 'maintenance'])->find($id);
+        $aset = Aset::with(['kos', 'kamar', 'maintenance'])->find($id);
 
         if (!$aset) {
             return response()->json([
@@ -123,8 +146,9 @@ class AsetController extends Controller
             'kategori'           => 'nullable|string|max:255',
             'tanggal_pembelian'  => 'sometimes|date',
             'harga'              => 'sometimes|numeric|min:0',
-            'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat',
+            'kondisi'            => 'sometimes|in:baik,rusak_ringan,rusak_berat,perlu_di_ganti',
             'id_kos'             => 'sometimes|integer|exists:kos,id',
+            'id_kamar'           => 'nullable|integer|exists:kamar,id',
         ]);
 
         if ($validator->fails()) {

@@ -38,7 +38,7 @@ class KosControllerTest extends TestCase
     }
 
     /**
-     * Test owner can create a new kos branch.
+     * Menguji pemilik kos dapat membuat cabang kos baru.
      */
     public function test_owner_can_create_kos_branch()
     {
@@ -63,8 +63,8 @@ class KosControllerTest extends TestCase
     }
 
     /**
-     * Test non-owner cannot create a new kos branch.
-     */
+      * Menguji selain pemilik kos tidak dapat membuat cabang kos baru.
+      */
     public function test_non_owner_cannot_create_kos_branch()
     {
         $response = $this->postJson('/api/kos', [
@@ -83,7 +83,7 @@ class KosControllerTest extends TestCase
     }
 
     /**
-     * Test owner can assign a manager (pengelola) to a kos branch.
+     * Menguji pemilik kos dapat menugaskan pengelola ke cabang kos.
      */
     public function test_owner_can_assign_pengelola_to_kos()
     {

@@ -18,6 +18,19 @@ class KamarController extends Controller
     {
         $query = Kamar::query();
 
+        $userRole   = $request->input('auth_user_role');
+        $authUserId = $request->input('auth_user_id');
+
+        if ($userRole === 'owner' && $authUserId) {
+            $query->whereHas('kos', function ($q) use ($authUserId) {
+                $q->where('id_user', $authUserId);
+            });
+        } elseif ($userRole === 'pengelola_kos' && $authUserId) {
+            $query->whereHas('kos', function ($q) use ($authUserId) {
+                $q->where('id_pengelola', $authUserId);
+            });
+        }
+
         // Filter by status
         if ($request->has('status_kamar')) {
             $query->where('status_kamar', $request->status_kamar);
@@ -98,7 +111,7 @@ class KamarController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $kamar = Kamar::with('kos')->find($id);
+        $kamar = Kamar::with('kos.pengelola')->find($id);
 
         if (!$kamar) {
             return response()->json([

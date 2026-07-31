@@ -19,6 +19,7 @@ class Aset extends Model
         'harga',
         'kondisi',
         'id_kos',
+        'id_kamar',
     ];
 
     protected function casts(): array
@@ -35,6 +36,14 @@ class Aset extends Model
     public function kos()
     {
         return $this->belongsTo(Kos::class, 'id_kos');
+    }
+
+    /**
+     * Get the kamar that owns this aset (if assigned to a specific room).
+     */
+    public function kamar()
+    {
+        return $this->belongsTo(Kamar::class, 'id_kamar');
     }
 
     /**

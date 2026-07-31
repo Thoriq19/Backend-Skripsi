@@ -61,7 +61,7 @@ class NotifikasiControllerTest extends TestCase
     }
 
     /**
-     * Test fetching unread notification count.
+     * Menguji pengambilan jumlah notifikasi yang belum dibaca.
      */
     public function test_fetch_unread_notifications_count()
     {
@@ -78,7 +78,7 @@ class NotifikasiControllerTest extends TestCase
     }
 
     /**
-     * Test marking a specific notification as read.
+     * Menguji penandaan suatu notifikasi tertentu menjadi sudah dibaca.
      */
     public function test_user_can_mark_notification_as_read()
     {
@@ -97,7 +97,7 @@ class NotifikasiControllerTest extends TestCase
     }
 
     /**
-     * Test unread count endpoint validation fails without id_user.
+     * Menguji kegagalan validasi endpoint jumlah belum dibaca jika id_user kosong.
      */
     public function test_unread_count_fails_without_user_id()
     {

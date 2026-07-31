@@ -355,7 +355,6 @@ class DatabaseSeeder extends Seeder
                 'tanggal_lapor'   => now()->subDays(2),
                 'status_laporan'  => 'diproses',
                 'deskripsi'       => 'Water heater di kamar mandi tidak mengeluarkan air panas, sudah dicoba restart tapi tetap dingin.',
-                'foto'            => null,
                 'id_user'         => 3,
                 'id_aset'         => 3,
                 'created_at'      => now(),

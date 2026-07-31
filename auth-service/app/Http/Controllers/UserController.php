@@ -6,6 +6,7 @@ use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class UserController extends Controller
 {
@@ -67,6 +68,7 @@ class UserController extends Controller
      */
     public function update(Request $request, int $id): JsonResponse
     {
+        $this->handleBase64Ktp($request);
         $user = User::find($id);
 
         if (!$user) {
@@ -79,11 +81,12 @@ class UserController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nama_user'     => 'sometimes|string|max:255',
-            'email_user'    => 'sometimes|string|email|max:255|unique:users,email_user,' . $id,
-            'nohp_user'     => 'nullable|string|max:20',
-            'role'          => 'sometimes|in:pengelola_kos,owner,user',
-            'password_user' => 'nullable|string|min:6|confirmed',
+            'nama_user'          => 'sometimes|string|max:255',
+            'email_user'         => 'sometimes|string|email|max:255|unique:users,email_user,' . $id,
+            'nohp_user'          => 'nullable|string|regex:/^[0-9]+$/|min:10|max:15',
+            'role'               => 'sometimes|in:pengelola_kos,owner,user',
+            'password_user'      => 'nullable|string|min:6|confirmed',
+            'dokumen_pendukung'  => 'nullable|string|max:500',
         ]);
 
         if ($validator->fails()) {
@@ -95,7 +98,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $updateData = $request->only(['nama_user', 'email_user', 'nohp_user', 'role']);
+        $updateData = $request->only(['nama_user', 'email_user', 'nohp_user', 'role', 'dokumen_pendukung']);
         if ($request->filled('password_user')) {
             $updateData['password_user'] = $request->password_user;
         }
@@ -152,7 +155,7 @@ class UserController extends Controller
             'nama_user'     => 'required|string|max:255',
             'email_user'    => 'required|string|email|max:255|unique:users,email_user',
             'password_user' => 'required|string|min:6|confirmed',
-            'nohp_user'     => 'nullable|string|max:20',
+            'nohp_user'     => 'nullable|string|regex:/^[0-9]+$/|min:10|max:15',
         ]);
 
         if ($validator->fails()) {
@@ -191,11 +194,12 @@ class UserController extends Controller
      */
     public function createUser(Request $request): JsonResponse
     {
+        $this->handleBase64Ktp($request);
         $validator = Validator::make($request->all(), [
             'nama_user'          => 'required|string|max:255',
             'email_user'         => 'required|string|email|max:255|unique:users,email_user',
             'password_user'      => 'required|string|min:6|confirmed',
-            'nohp_user'          => 'nullable|string|max:20',
+            'nohp_user'          => 'nullable|string|regex:/^[0-9]+$/|min:10|max:15',
             'dokumen_pendukung'  => 'nullable|string|max:500',
         ]);
 
@@ -214,6 +218,7 @@ class UserController extends Controller
             'password_user'      => $request->password_user,
             'role'               => 'user',
             'nohp_user'          => $request->nohp_user,
+            'id_pengelola'       => $request->id_pengelola ?? Auth::id(),
             'dokumen_pendukung'  => $request->dokumen_pendukung,
             'email_verified_at'  => now(),
         ]);
@@ -224,5 +229,39 @@ class UserController extends Controller
             'data'    => $user,
             'errors'  => null,
         ], 201);
+    }
+
+    /**
+     * Decode and save base64 KTP image to disk, rewriting request field with path.
+     */
+    private function handleBase64Ktp(Request $request): void
+    {
+        if ($request->filled('dokumen_pendukung') && str_starts_with($request->input('dokumen_pendukung'), 'data:image')) {
+            try {
+                $base64 = $request->input('dokumen_pendukung');
+                if (preg_match('/^data:image\/(\w+);base64,/', $base64, $typeMatches)) {
+                    $imageType = strtolower($typeMatches[1]);
+                    $data = substr($base64, strpos($base64, ',') + 1);
+                    $data = base64_decode($data);
+                    
+                    if ($data !== false) {
+                        $filename = 'ktp_' . uniqid() . '.' . $imageType;
+                        $directoryPath = public_path('uploads/ktp');
+                        
+                        if (!file_exists($directoryPath)) {
+                            mkdir($directoryPath, 0777, true);
+                        }
+                        
+                        file_put_contents($directoryPath . '/' . $filename, $data);
+                        
+                        $request->merge([
+                            'dokumen_pendukung' => '/uploads/ktp/' . $filename
+                        ]);
+                    }
+                }
+            } catch (\Exception $e) {
+                // Ignore failure and let default behavior handle validation
+            }
+        }
     }
 }

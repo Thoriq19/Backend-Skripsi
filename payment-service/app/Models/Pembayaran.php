@@ -18,6 +18,7 @@ class Pembayaran extends Model
         'status_pembayaran',
         'payment_gateway',
         'external_id',
+        'snap_token',
         'status_webhook',
         'id_tagihan',
     ];

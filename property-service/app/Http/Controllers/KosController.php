@@ -18,14 +18,25 @@ class KosController extends Controller
     {
         $query = Kos::query();
 
-        // Filter by owner
-        if ($request->has('id_user')) {
-            $query->where('id_user', $request->id_user);
-        }
+        $userRole   = $request->input('auth_user_role');
+        $authUserId = $request->input('auth_user_id');
 
-        // Filter by pengelola
-        if ($request->has('id_pengelola')) {
-            $query->where('id_pengelola', $request->id_pengelola);
+        if ($userRole === 'owner' && $authUserId) {
+            // Owner can only view their own properties
+            $query->where('id_user', $authUserId);
+        } elseif ($userRole === 'pengelola_kos' && $authUserId) {
+            // Pengelola can only view properties assigned to them
+            $query->where('id_pengelola', $authUserId);
+        } else {
+            // Filter by owner if passed
+            if ($request->has('id_user')) {
+                $query->where('id_user', $request->id_user);
+            }
+
+            // Filter by pengelola if passed
+            if ($request->has('id_pengelola')) {
+                $query->where('id_pengelola', $request->id_pengelola);
+            }
         }
 
         $perPage = $request->get('per_page', 15);
@@ -76,10 +87,27 @@ class KosController extends Controller
 
         $kos = Kos::create($request->all());
 
+        // Create raw/mentahan Kamar records with only room numbers for Owner initialization
+        $jumlahKamar = intval($request->jumlah_kamar);
+        if ($jumlahKamar > 0) {
+            for ($i = 1; $i <= $jumlahKamar; $i++) {
+                $roomNum = 'A1' . str_pad($i, 2, '0', STR_PAD_LEFT);
+                \App\Models\Kamar::create([
+                    'id_kos'          => $kos->id,
+                    'nomor_kamar'     => $roomNum,
+                    'tipe_kamar'      => null,
+                    'kapasitas_kamar' => 1,
+                    'harga_kamar'     => 0,
+                    'status_kamar'    => 'tidak_tersedia',
+                    'deskripsi_kamar' => null,
+                ]);
+            }
+        }
+
         return response()->json([
             'success' => true,
             'message' => 'Kos created successfully',
-            'data'    => $kos,
+            'data'    => $kos->fresh()->load(['kamar', 'aset']),
             'errors'  => null,
         ], 201);
     }

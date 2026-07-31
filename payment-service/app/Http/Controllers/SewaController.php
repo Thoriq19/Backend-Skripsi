@@ -7,6 +7,7 @@ use App\Models\Tagihan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Shared\MicroserviceClient;
 
 class SewaController extends Controller
 {
@@ -71,6 +72,7 @@ class SewaController extends Controller
             'tanggal_keluar' => 'nullable|date|after:tanggal_masuk',
             'status_sewa'    => 'sometimes|in:aktif,berakhir,dibatalkan',
             'harga_sewa'     => 'required|numeric|min:0',
+            'deposit'        => 'nullable|numeric|min:0',
             'id_user'        => 'required|integer|exists:users,id',
             'id_kamar'       => 'required|integer|exists:kamar,id',
         ]);
@@ -84,17 +86,38 @@ class SewaController extends Controller
             ], 422);
         }
 
-        $sewa = Sewa::create($request->all());
+        $sewa = Sewa::create($request->except(['deposit']));
 
-        // Auto-generate tagihan pertama berdasarkan tanggal masuk (Prosedur 4d)
+        // Auto-generate tagihan pertama berdasarkan tanggal masuk + deposit Rp 200.000 (Prosedur 4d)
+        $deposit = $request->has('deposit') ? (float) $request->deposit : 200000;
+        $totalTagihanPertama = (float) $request->harga_sewa + $deposit;
+
         $tanggalMasuk = \Carbon\Carbon::parse($request->tanggal_masuk);
         $tagihan = Tagihan::create([
             'bulan_tagihan'      => $tanggalMasuk->format('Y-m'),
             'tanggal_jatuhtempo' => $tanggalMasuk->toDateString(),
-            'jumlah_tagihan'     => $request->harga_sewa,
+            'jumlah_tagihan'     => $totalTagihanPertama,
             'status_tagihan'     => 'belum_bayar',
             'id_sewa'            => $sewa->id,
         ]);
+
+        // Dispatch initial bill notification to tenant
+        try {
+            $notifClient = new MicroserviceClient(
+                env('NOTIFICATION_SERVICE_URL', 'http://localhost:8007')
+            );
+            $formattedTotal = "Rp " . number_format($totalTagihanPertama, 0, ',', '.');
+            $notifClient->post('/api/notifikasi', [
+                'id_user'      => $sewa->id_user,
+                'judul'        => '📋 Kontrak Sewa & Tagihan Pertama',
+                'pesan'        => "Selamat! Kontrak sewa Anda telah aktif. Silakan lakukan pembayaran tagihan pertama (Sewa + Deposit Rp 200.000) sebesar {$formattedTotal} sebagai syarat masuk.",
+                'tipe'         => 'pembayaran',
+                'id_terkait'   => $tagihan->id,
+                'tipe_terkait' => 'tagihan',
+            ]);
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::warning("Initial bill notification failed: " . $e->getMessage());
+        }
 
         return response()->json([
             'success' => true,

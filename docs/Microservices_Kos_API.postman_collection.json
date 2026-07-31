@@ -289,7 +289,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nama_user\": \"Penghuni Baru\",\n    \"email_user\": \"penghunibaru@example.com\",\n    \"password_user\": \"password123\",\n    \"password_user_confirmation\": \"password123\",\n    \"nohp_user\": \"081234567892\",\n    \"dokumen_pendukung\": \"uploads/dokumen/ktp_penghuni_baru.jpg\"\n}"
+							"raw": "{\n    \"nama_user\": \"Penghuni Baru\",\n    \"email_user\": \"penghunibaru@example.com\",\n    \"password_user\": \"password123\",\n    \"password_user_confirmation\": \"password123\",\n    \"nohp_user\": \"081234567892\",\n    \"dokumen_pendukung\": \"data:image/png;base64,iVBORw0KGgoAAA...\"\n}"
 						},
 						"url": {
 							"raw": "{{gateway_url}}/api/users/create-user",
@@ -343,7 +343,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"nama_user\": \"Nama Updated\",\n    \"nohp_user\": \"081234567899\"\n}"
+							"raw": "{\n    \"nama_user\": \"Nama Updated\",\n    \"nohp_user\": \"081234567899\",\n    \"dokumen_pendukung\": \"data:image/png;base64,iVBORw0KGgoAAA...\"\n}"
 						},
 						"url": {
 							"raw": "{{gateway_url}}/api/users/3",

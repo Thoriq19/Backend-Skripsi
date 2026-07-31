@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('password_user');
             $table->enum('role', ['owner', 'pengelola_kos', 'user'])->default('user');
             $table->string('nohp_user')->nullable();
+            $table->unsignedBigInteger('id_pengelola')->nullable();
             $table->timestamp('email_verified_at')->nullable();
             $table->timestamps();
             $table->softDeletes();

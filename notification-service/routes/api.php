@@ -13,11 +13,11 @@ use App\Http\Controllers\NotifikasiController;
 | is also accessible from other services (inter-service calls).
 |
 */
-Route::middleware([\App\Http\Middleware\JwtMiddleware::class])->group(function () {
-
-    Route::prefix('notifikasi')->group(function () {
+Route::prefix('notifikasi')->group(function () {
+    // POST /api/notifikasi is open for inter-service calls
+    Route::post('/', [NotifikasiController::class, 'store']);
+    Route::middleware([\App\Http\Middleware\JwtMiddleware::class])->group(function () {
         Route::get('/', [NotifikasiController::class, 'index']);
-        Route::post('/', [NotifikasiController::class, 'store']);
         Route::get('/belum-dibaca', [NotifikasiController::class, 'unreadCount']);
         Route::get('/{id}', [NotifikasiController::class, 'show']);
         Route::put('/{id}/baca', [NotifikasiController::class, 'markAsRead']);

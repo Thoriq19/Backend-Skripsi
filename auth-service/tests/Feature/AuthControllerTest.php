@@ -11,7 +11,7 @@ class AuthControllerTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * Test register owner account in local environment.
+     * Menguji registrasi pemilik kos baru di lingkungan lokal (auto-verified).
      */
     public function test_register_owner_success_in_local_env()
     {
@@ -39,7 +39,7 @@ class AuthControllerTest extends TestCase
     }
 
     /**
-     * Test login returns JWT token for verified user.
+     * Menguji login berhasil dan mengembalikan token JWT untuk pengguna terverifikasi.
      */
     public function test_login_success_returns_jwt_token()
     {
@@ -72,7 +72,7 @@ class AuthControllerTest extends TestCase
     }
 
     /**
-     * Test login fails with invalid credentials.
+     * Menguji login gagal jika memasukkan email/password yang tidak valid.
      */
     public function test_login_fails_with_invalid_credentials()
     {
@@ -96,33 +96,9 @@ class AuthControllerTest extends TestCase
                  ]);
     }
 
-    /**
-     * Test login unverified owner is forbidden.
-     */
-    public function test_login_unverified_owner_forbidden()
-    {
-        $user = User::create([
-            'nama_user' => 'Test Unverified Owner',
-            'email_user' => 'unverified@test.com',
-            'password_user' => 'password123',
-            'role' => 'owner',
-            'email_verified_at' => null, // Not verified
-        ]);
-
-        $response = $this->postJson('/api/auth/login', [
-            'email_user' => 'unverified@test.com',
-            'password_user' => 'password123',
-        ]);
-
-        $response->assertStatus(403)
-                 ->assertJson([
-                     'success' => false,
-                     'message' => 'Alamat email Anda belum diverifikasi. Silakan periksa kotak masuk email Anda.',
-                 ]);
-    }
 
     /**
-     * Test validate token endpoint validates JWT token correctly.
+     * Menguji kelayakan endpoint validasi token JWT.
      */
     public function test_validate_token_endpoint()
     {

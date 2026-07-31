@@ -18,10 +18,12 @@ return new class extends Migration
             $table->decimal('harga', 12, 2);
             $table->enum('kondisi', ['baik', 'rusak_ringan', 'rusak_berat'])->default('baik');
             $table->unsignedBigInteger('id_kos');
+            $table->unsignedBigInteger('id_kamar')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->foreign('id_kos')->references('id')->on('kos')->onDelete('cascade');
+            $table->foreign('id_kamar')->references('id')->on('kamar')->onDelete('set null');
         });
     }
 

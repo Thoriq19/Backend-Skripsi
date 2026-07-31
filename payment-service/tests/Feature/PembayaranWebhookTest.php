@@ -41,6 +41,7 @@ class PembayaranWebhookTest extends TestCase
             'nomor_kamar' => '101',
             'tipe_kamar' => 'reguler',
             'harga_kamar' => 800000,
+            'kapasitas_kamar' => 1,
             'status_kamar' => 'tersedia',
             'id_kos' => $kosId,
             'created_at' => now(),
@@ -60,9 +61,10 @@ class PembayaranWebhookTest extends TestCase
 
         // 5. Insert Tagihan
         $this->tagihanId = DB::table('tagihan')->insertGetId([
-            'nama_tagihan' => 'Sewa Kamar 101 - Periode Juli',
+            'bulan_tagihan' => 'Juli 2026',
+            'tanggal_jatuhtempo' => now()->addDays(5)->toDateString(),
             'jumlah_tagihan' => 800000,
-            'status_tagihan' => 'belum_lunas',
+            'status_tagihan' => 'belum_bayar',
             'id_sewa' => $sewaId,
             'created_at' => now(),
             'updated_at' => now(),
@@ -70,11 +72,10 @@ class PembayaranWebhookTest extends TestCase
 
         // 6. Insert Pembayaran
         DB::table('pembayaran')->insertGetId([
-            'metode_pembayaran' => 'e-wallet',
-            'jumlah_pembayaran' => 800000,
+            'metode_pembayaran' => 'e_wallet',
+            'jumlah_bayar' => 800000,
             'status_pembayaran' => 'pending',
             'external_id' => $this->externalId,
-            'checkout_url' => 'https://checkout.sandbox.com/invoice-123456',
             'id_tagihan' => $this->tagihanId,
             'created_at' => now(),
             'updated_at' => now(),
@@ -82,7 +83,7 @@ class PembayaranWebhookTest extends TestCase
     }
 
     /**
-     * Test webhook callback updates payment and billing status to PAID/berhasil.
+     * Menguji callback webhook memperbarui status pembayaran dan tagihan menjadi lunas/berhasil.
      */
     public function test_webhook_updates_payment_status_to_success()
     {
@@ -112,7 +113,7 @@ class PembayaranWebhookTest extends TestCase
     }
 
     /**
-     * Test webhook fails validation when required parameters are missing.
+     * Menguji kegagalan webhook jika parameter wajib tidak dikirim.
      */
     public function test_webhook_fails_on_validation_failure()
     {
@@ -129,7 +130,7 @@ class PembayaranWebhookTest extends TestCase
     }
 
     /**
-     * Test webhook returns 404 for unknown external_id.
+     * Menguji penolakan webhook jika external_id tidak ditemukan.
      */
     public function test_webhook_returns_404_for_unknown_external_id()
     {

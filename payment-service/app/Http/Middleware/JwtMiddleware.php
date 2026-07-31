@@ -61,6 +61,15 @@ class JwtMiddleware
                 'errors'  => null,
             ], 401);
 
+        } catch (\GuzzleHttp\Exception\ClientException $e) {
+            $response = $e->getResponse();
+            $body = json_decode($response->getBody()->getContents(), true);
+            return response()->json($body ?? [
+                'success' => false,
+                'message' => 'Unauthorized',
+                'data'    => null,
+                'errors'  => null,
+            ], $response->getStatusCode());
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

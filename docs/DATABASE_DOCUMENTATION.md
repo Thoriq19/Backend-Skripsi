@@ -69,6 +69,7 @@ erDiagram
         text alamat_kos
         integer jumlah_kamar
         bigint id_user FK "Ref: users.id"
+        bigint id_pengelola FK "Ref: users.id"
         timestamps timestamps
         softDeletes deleted_at
     }
@@ -134,11 +135,12 @@ erDiagram
     PEMBAYARAN {
         bigint id PK
         timestamp tanggal_bayar
-        enum metode_pembayaran "transfer_bank, e_wallet, tunai"
+        enum metode_pembayaran "transfer_bank, e_wallet"
         decimal jumlah_bayar "14,2"
         enum status_pembayaran "pending, berhasil, gagal"
-        enum payment_gateway "manual, xendit, midtrans"
+        enum payment_gateway "xendit, midtrans"
         string external_id UK
+        string snap_token
         enum status_webhook "waiting, received, verified"
         bigint id_tagihan FK "Ref: tagihan.id"
         timestamps timestamps
@@ -388,10 +390,11 @@ Menyimpan informasi data kos yang dimiliki oleh pemilik.
 | 2. | `nama_kos` | VARCHAR(255) | Nama kos |
 | 3. | `alamat_kos` | TEXT | Alamat lengkap kos |
 | 4. | `jumlah_kamar` | INT(11) | Jumlah total kamar |
-| 5. | `id_user` | INT(11) | Foreign Key -> user(id_user), pemilik kos |
-| 6. | `created_at` | TIMESTAMP | Tanggal data dibuat |
-| 7. | `updated_at` | TIMESTAMP | Tanggal data diperbarui |
-| 8. | `deleted_at` | TIMESTAMP | Tanggal data dihapus (Soft Delete, Nullable) |
+| 5. | `id_user` | INT(11) | Foreign Key -> user(id_user), pemilik kos (owner) |
+| 6. | `id_pengelola` | INT(11) | Foreign Key -> user(id_user), pengelola kos (pengelola_kos, Nullable) |
+| 7. | `created_at` | TIMESTAMP | Tanggal data dibuat |
+| 8. | `updated_at` | TIMESTAMP | Tanggal data diperbarui |
+| 9. | `deleted_at` | TIMESTAMP | Tanggal data dihapus (Soft Delete, Nullable) |
 
 ### 3. Tabel Kamar
 Menyimpan informasi detail unit kamar di dalam kos.
@@ -483,15 +486,16 @@ Menyimpan informasi transaksi pembayaran tagihan kos.
 | :--- | :--- | :--- | :--- |
 | 1. | `id_pembayaran` | INT(11) | Primary Key, Auto Increment |
 | 2. | `tanggal_bayar` | TIMESTAMP | Tanggal pembayaran lunas (Nullable) |
-| 3. | `metode_pembayaran` | ENUM('transfer_bank', 'e_wallet', 'tunai') | Metode pembayaran |
+| 3. | `metode_pembayaran` | ENUM('transfer_bank', 'e_wallet') | Metode pembayaran online yang digunakan |
 | 4. | `jumlah_bayar` | DECIMAL(14,2) | Nominal yang dibayar |
 | 5. | `status_pembayaran` | ENUM('pending', 'berhasil', 'gagal') | Status transaksi |
-| 6. | `payment_gateway` | ENUM('manual', 'xendit', 'midtrans') | Vendor gateway pembayaran |
+| 6. | `payment_gateway` | ENUM('xendit', 'midtrans') | Vendor gateway pembayaran |
 | 7. | `external_id` | VARCHAR(255) | ID referensi unik payment gateway (Unique, Nullable) |
-| 8. | `status_webhook` | ENUM('waiting', 'received', 'verified') | Status penanganan callback webhook |
-| 9. | `id_tagihan` | INT(11) | Foreign Key -> tagihan(id_tagihan), tagihan yang dibayar |
-| 10. | `created_at` | TIMESTAMP | Tanggal data dibuat |
-| 11. | `updated_at` | TIMESTAMP | Tanggal data diperbarui |
+| 8. | `snap_token` | VARCHAR(255) | Token transaksi aktif dari Midtrans Snap API (Nullable) |
+| 9. | `status_webhook` | ENUM('waiting', 'received', 'verified') | Status penanganan callback webhook |
+| 10. | `id_tagihan` | INT(11) | Foreign Key -> tagihan(id_tagihan), tagihan yang dibayar |
+| 11. | `created_at` | TIMESTAMP | Tanggal data dibuat |
+| 12. | `updated_at` | TIMESTAMP | Tanggal data diperbarui |
 
 ### 9. Tabel Laporan Kerusakan
 Menyimpan aduan pengaduan kerusakan aset dari penghuni.

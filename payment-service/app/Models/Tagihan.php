@@ -32,7 +32,7 @@ class Tagihan extends Model
      */
     public function sewa()
     {
-        return $this->belongsTo(Sewa::class, 'id_sewa');
+        return $this->belongsTo(Sewa::class, 'id_sewa')->withTrashed();
     }
 
     /**

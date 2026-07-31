@@ -6,9 +6,89 @@ use App\Models\Tagihan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
+use Shared\MicroserviceClient;
 
 class TagihanController extends Controller
 {
+    /**
+     * Helper to automatically sync overdue bills and send tri-actor notifications.
+     */
+    private function syncOverdueStatus(): void
+    {
+        try {
+            $today = date('Y-m-d');
+            $overdueBills = Tagihan::where('status_tagihan', 'belum_bayar')
+                ->where('tanggal_jatuhtempo', '<', $today)
+                ->get();
+
+            if ($overdueBills->isEmpty()) {
+                return;
+            }
+
+            $notifClient = new MicroserviceClient(
+                env('NOTIFICATION_SERVICE_URL', 'http://localhost:8007')
+            );
+
+            foreach ($overdueBills as $item) {
+                // Update status in DB
+                $item->update(['status_tagihan' => 'terlambat']);
+
+                // Retrieve sewa, kamar, and kos info for notification dispatch
+                $sewa = DB::table('sewa')->where('id', $item->id_sewa)->first();
+                if ($sewa) {
+                    $kamar = DB::table('kamar')->where('id', $sewa->id_kamar)->first();
+                    $kos = $kamar ? DB::table('kos')->where('id', $kamar->id_kos)->first() : null;
+
+                    $formattedAmount = "Rp " . number_format($item->jumlah_tagihan, 0, ',', '.');
+                    $formattedDueDate = date('d/m/Y', strtotime($item->tanggal_jatuhtempo));
+
+                    // 1. Send Notification to Tenant (Penghuni)
+                    try {
+                        $notifClient->post('/api/notifikasi', [
+                            'id_user'      => $sewa->id_user,
+                            'judul'        => '⚠️ Tagihan Lewat Jatuh Tempo',
+                            'pesan'        => "Tagihan sewa bulan {$item->bulan_tagihan} sebesar {$formattedAmount} telah melewati jatuh tempo ({$formattedDueDate}). Harap segera melakukan pembayaran.",
+                            'tipe'         => 'peringatan',
+                            'id_terkait'   => $item->id,
+                            'tipe_terkait' => 'tagihan',
+                        ]);
+                    } catch (\Exception $e) {}
+
+                    // 2. Send Notification to Pengelola Kos (Manager)
+                    if ($kos && !empty($kos->id_pengelola)) {
+                        try {
+                            $notifClient->post('/api/notifikasi', [
+                                'id_user'      => $kos->id_pengelola,
+                                'judul'        => '⚠️ Peringatan Keterlambatan Sewa',
+                                'pesan'        => "Penghuni Kamar {$kamar->nomor_kamar} di Kos '{$kos->nama_kos}' belum membayar tagihan {$formattedAmount} yang telah lewat jatuh tempo ({$formattedDueDate}).",
+                                'tipe'         => 'peringatan',
+                                'id_terkait'   => $item->id,
+                                'tipe_terkait' => 'tagihan',
+                            ]);
+                        } catch (\Exception $e) {}
+                    }
+
+                    // 3. Send Notification to Owner (Pemilik Kos)
+                    if ($kos && !empty($kos->id_user)) {
+                        try {
+                            $notifClient->post('/api/notifikasi', [
+                                'id_user'      => $kos->id_user,
+                                'judul'        => '📌 Laporan Tunggakan Sewa',
+                                'pesan'        => "Terdapat 1 tagihan sewa terlambat sebesar {$formattedAmount} (Kamar {$kamar->nomor_kamar}) di Kos '{$kos->nama_kos}'.",
+                                'tipe'         => 'peringatan',
+                                'id_terkait'   => $item->id,
+                                'tipe_terkait' => 'tagihan',
+                            ]);
+                        } catch (\Exception $e) {}
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Silence exception to avoid breaking list requests
+        }
+    }
+
     /**
      * Get all tagihan.
      *
@@ -16,6 +96,8 @@ class TagihanController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $this->syncOverdueStatus();
+
         $query = Tagihan::query();
 
         // Filter by sewa
@@ -29,7 +111,7 @@ class TagihanController extends Controller
         }
 
         $perPage = $request->get('per_page', 15);
-        $tagihan = $query->with(['sewa', 'pembayaran'])->paginate($perPage);
+        $tagihan = $query->with(['sewa.user', 'pembayaran'])->paginate($perPage);
 
         return response()->json([
             'success' => true,
@@ -80,7 +162,8 @@ class TagihanController extends Controller
      */
     public function show(int $id): JsonResponse
     {
-        $tagihan = Tagihan::with(['sewa', 'pembayaran'])->find($id);
+        $this->syncOverdueStatus();
+        $tagihan = Tagihan::with(['sewa.user', 'pembayaran'])->find($id);
 
         if (!$tagihan) {
             return response()->json([

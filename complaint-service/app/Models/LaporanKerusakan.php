@@ -16,7 +16,7 @@ class LaporanKerusakan extends Model
         'tanggal_lapor',
         'status_laporan',
         'deskripsi',
-        'foto',
+        'foto_laporan',
         'id_user',
         'id_aset',
     ];

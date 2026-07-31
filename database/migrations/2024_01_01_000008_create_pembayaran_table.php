@@ -14,10 +14,10 @@ return new class extends Migration
         Schema::create('pembayaran', function (Blueprint $table) {
             $table->id();
             $table->timestamp('tanggal_bayar')->nullable();
-            $table->enum('metode_pembayaran', ['transfer_bank', 'e_wallet', 'tunai']);
+            $table->enum('metode_pembayaran', ['transfer_bank', 'e_wallet']);
             $table->decimal('jumlah_bayar', 14, 2);
             $table->enum('status_pembayaran', ['pending', 'berhasil', 'gagal'])->default('pending');
-            $table->enum('payment_gateway', ['manual', 'xendit', 'midtrans'])->default('manual');
+            $table->enum('payment_gateway', ['xendit', 'midtrans'])->default('midtrans');
             $table->string('external_id')->nullable()->unique();
             $table->enum('status_webhook', ['waiting', 'received', 'verified'])->default('waiting');
             $table->unsignedBigInteger('id_tagihan');

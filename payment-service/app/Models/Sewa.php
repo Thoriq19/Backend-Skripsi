@@ -37,4 +37,12 @@ class Sewa extends Model
     {
         return $this->hasMany(Tagihan::class, 'id_sewa');
     }
+
+    /**
+     * Get the user for this sewa.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'id_user');
+    }
 }

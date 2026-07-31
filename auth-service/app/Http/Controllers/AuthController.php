@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
@@ -24,8 +23,8 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'nama_user'     => 'required|string|max:255',
             'email_user'    => 'required|string|email|max:255|unique:users,email_user',
-            'password_user' => 'required|string|min:6|confirmed',
-            'nohp_user'     => 'nullable|string|max:20',
+            'password_user' => 'required|string|min:8|confirmed',
+            'nohp_user'     => 'nullable|string|regex:/^[0-9]+$/|min:10|max:15',
         ]);
 
         if ($validator->fails()) {
@@ -47,7 +46,8 @@ class AuthController extends Controller
 
         // Di environment local (development/demo), langsung verifikasi email otomatis
         // tanpa perlu klik link di inbox. Di production, user tetap harus verifikasi.
-        if (app()->environment('local')) {
+        if (app()->environment('local', 'testing')) {
+            /** @var \App\Models\User $user */
             $user->markEmailAsVerified();
 
             return response()->json([
@@ -95,7 +95,10 @@ class AuthController extends Controller
             'password'   => $request->password_user,
         ];
 
-        if (!$token = auth('api')->attempt($credentials)) {
+        /** @var \Tymon\JWTAuth\JWTGuard $auth */
+        $auth = auth('api');
+
+        if (!$token = $auth->attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid email or password',
@@ -104,18 +107,9 @@ class AuthController extends Controller
             ], 401);
         }
 
-        $user = auth('api')->user();
+        $user = $auth->user();
 
-        // Check if email is verified (only for Owner role, Pengelola/User are pre-verified)
-        if ($user->role === 'owner' && is_null($user->email_verified_at)) {
-            auth('api')->logout(); // invalidate token because not verified
-            return response()->json([
-                'success' => false,
-                'message' => 'Alamat email Anda belum diverifikasi. Silakan periksa kotak masuk email Anda.',
-                'data'    => null,
-                'errors'  => null,
-            ], 403);
-        }
+
 
         return response()->json([
             'success' => true,
@@ -137,7 +131,9 @@ class AuthController extends Controller
      */
     public function logout(): JsonResponse
     {
-        auth('api')->logout();
+        /** @var \Tymon\JWTAuth\JWTGuard $auth */
+        $auth = auth('api');
+        $auth->logout();
 
         return response()->json([
             'success' => true,
@@ -154,10 +150,13 @@ class AuthController extends Controller
      */
     public function me(): JsonResponse
     {
+        /** @var \Tymon\JWTAuth\JWTGuard $auth */
+        $auth = auth('api');
+
         return response()->json([
             'success' => true,
             'message' => 'User profile retrieved',
-            'data'    => auth('api')->user(),
+            'data'    => $auth->user(),
             'errors'  => null,
         ]);
     }
@@ -169,7 +168,9 @@ class AuthController extends Controller
      */
     public function refresh(): JsonResponse
     {
-        $token = auth('api')->refresh();
+        /** @var \Tymon\JWTAuth\JWTGuard $auth */
+        $auth = auth('api');
+        $token = $auth->refresh();
 
         return response()->json([
             'success' => true,
@@ -191,7 +192,9 @@ class AuthController extends Controller
     public function validateToken(): JsonResponse
     {
         try {
-            $user = auth('api')->user();
+            /** @var \Tymon\JWTAuth\JWTGuard $auth */
+            $auth = auth('api');
+            $user = $auth->user();
 
             if (!$user) {
                 return response()->json([
@@ -240,6 +243,7 @@ class AuthController extends Controller
             ], 401);
         }
 
+        /** @var \App\Models\User $user */
         $user = User::findOrFail($id);
 
         // 2. Validate hash mapping

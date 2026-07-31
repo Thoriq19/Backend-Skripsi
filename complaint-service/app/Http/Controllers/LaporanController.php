@@ -6,6 +6,7 @@ use App\Models\LaporanKerusakan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class LaporanController extends Controller
 {
@@ -54,13 +55,18 @@ class LaporanController extends Controller
      */
     public function store(Request $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
+        $rules = [
             'deskripsi'      => 'required|string',
-            'foto'           => 'nullable|string|max:500',
             'status_laporan' => 'sometimes|in:dilaporkan,diproses,selesai',
             'id_user'        => 'required|integer|exists:users,id',
             'id_aset'        => 'required|integer|exists:aset,id',
-        ]);
+        ];
+
+        if ($request->hasFile('foto_laporan')) {
+            $rules['foto_laporan'] = 'file|mimes:jpeg,png,jpg,webp,svg,gif,jfif,heic|max:10240';
+        }
+
+        $validator = Validator::make($request->all(), $rules);
 
         if ($validator->fails()) {
             return response()->json([
@@ -71,26 +77,58 @@ class LaporanController extends Controller
             ], 422);
         }
 
-        $laporan = LaporanKerusakan::create(array_merge(
-            $request->all(),
-            ['tanggal_lapor' => now()]
-        ));
+        $fotoUrl = null;
+        if ($request->hasFile('foto_laporan')) {
+            $file = $request->file('foto_laporan');
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            $file->storeAs('laporan', $filename, 'public');
+            $fotoUrl = '/storage/laporan/' . $filename;
+        }
 
-        // Kirim notifikasi otomatis ke pengelola kos (Prosedur 7c)
+        $laporan = LaporanKerusakan::create([
+            'deskripsi'      => $request->deskripsi,
+            'status_laporan' => $request->status_laporan ?? 'dilaporkan',
+            'id_user'        => $request->id_user,
+            'id_aset'        => $request->id_aset,
+            'foto_laporan'   => $fotoUrl,
+            'tanggal_lapor'  => now(),
+        ]);
+
+        // Kirim notifikasi otomatis ke Pengelola, Owner, dan Penghuni (Prosedur 7c)
         try {
             $notifClient = new \Shared\MicroserviceClient(
                 env('NOTIFICATION_SERVICE_URL', 'http://localhost:8007')
             );
 
-            // Notifikasi dikirim ke pengelola kos (id_user dari request header jika tersedia)
+            // 1. Kirim notifikasi konfirmasi ke Penghuni (tenant)
             $notifClient->post('/api/notifikasi', [
                 'id_user'      => $request->id_user,
-                'judul'        => 'Laporan Kerusakan Baru',
-                'pesan'        => "Laporan kerusakan baru telah dibuat: {$request->deskripsi}",
+                'judul'        => 'Laporan Kerusakan Dikirim',
+                'pesan'        => "Laporan Anda mengenai kerusakan fasilitas telah berhasil dikirim: {$request->deskripsi}",
                 'tipe'         => 'laporan',
                 'id_terkait'   => $laporan->id,
                 'tipe_terkait' => 'laporan_kerusakan',
             ]);
+
+            // Cari Kos dan Owner/Pengelola berdasarkan id_aset
+            $aset = DB::table('aset')->where('id', $laporan->id_aset)->first();
+            if ($aset) {
+                $kos = DB::table('kos')->where('id', $aset->id_kos)->first();
+                if ($kos) {
+                    // 2. Kirim ke Pengelola Kos (jika ada)
+                    if (!empty($kos->id_pengelola)) {
+                        $notifClient->post('/api/notifikasi', [
+                            'id_user'      => $kos->id_pengelola,
+                            'judul'        => 'Laporan Kerusakan Baru',
+                            'pesan'        => "Ada laporan kerusakan baru pada aset '{$aset->nama_aset}' di kos '{$kos->nama_kos}': {$request->deskripsi}",
+                            'tipe'         => 'laporan',
+                            'id_terkait'   => $laporan->id,
+                            'tipe_terkait' => 'laporan_kerusakan',
+                        ]);
+                    }
+
+                }
+            }
         } catch (\Exception $e) {
             // Notifikasi gagal tidak menghentikan proses pembuatan laporan
         }
@@ -149,7 +187,6 @@ class LaporanController extends Controller
 
         $validator = Validator::make($request->all(), [
             'deskripsi'      => 'sometimes|string',
-            'foto'           => 'nullable|string|max:500',
             'status_laporan' => 'sometimes|in:dilaporkan,diproses,selesai',
             'id_user'        => 'sometimes|integer|exists:users,id',
             'id_aset'        => 'sometimes|integer|exists:aset,id',
@@ -206,6 +243,31 @@ class LaporanController extends Controller
         }
 
         $laporan->update(['status_laporan' => $request->status_laporan]);
+
+        // Kirim notifikasi otomatis ke Penghuni bahwa status laporan berubah (Prosedur 7c)
+        try {
+            $notifClient = new \Shared\MicroserviceClient(
+                env('NOTIFICATION_SERVICE_URL', 'http://localhost:8007')
+            );
+            
+            // Cari nama aset untuk detail pesan
+            $asetName = 'Fasilitas';
+            $aset = DB::table('aset')->where('id', $laporan->id_aset)->first();
+            if ($aset) {
+                $asetName = $aset->nama_aset;
+            }
+
+            $notifClient->post('/api/notifikasi', [
+                'id_user'      => $laporan->id_user,
+                'judul'        => 'Pembaruan Status Aduan',
+                'pesan'        => "Laporan kerusakan Anda terkait '{$asetName}' telah diperbarui menjadi " . strtoupper($request->status_laporan) . ".",
+                'tipe'         => 'laporan',
+                'id_terkait'   => $laporan->id,
+                'tipe_terkait' => 'laporan_kerusakan',
+            ]);
+        } catch (\Exception $e) {
+            //
+        }
 
         return response()->json([
             'success' => true,

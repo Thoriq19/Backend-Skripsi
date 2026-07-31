@@ -7,7 +7,7 @@ use Tests\TestCase;
 class GatewayRoutingTest extends TestCase
 {
     /**
-     * Test API Gateway health check endpoint structure.
+     * Menguji struktur endpoint health check pada API Gateway.
      */
     public function test_gateway_health_check_endpoint()
     {
@@ -28,7 +28,7 @@ class GatewayRoutingTest extends TestCase
     }
 
     /**
-     * Test gateway returns error if target service is completely invalid/unconfigured.
+     * Menguji gateway mengembalikan error jika service tujuan tidak terkonfigurasi.
      */
     public function test_forward_request_fails_if_target_service_unconfigured()
     {

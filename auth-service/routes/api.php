@@ -19,6 +19,16 @@ Route::prefix('auth')->group(function () {
         ->name('verification.verify');
 });
 
+// Fallback named route for authentication redirects
+Route::get('/login', function () {
+    return response()->json([
+        'success' => false,
+        'message' => 'Unauthenticated',
+        'data' => null,
+        'errors' => null,
+    ], 401);
+})->name('login');
+
 /*
 |--------------------------------------------------------------------------
 | Protected routes (JWT authentication required)
